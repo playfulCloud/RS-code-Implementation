@@ -16,8 +16,6 @@ row = "x6+x5(a1+a2+a3+a4+a5+a6)+x4(a3+a4+a7+a10+a11)+x3(a6+a7+a9+a10+a11+a12+a14
 field = komm.FiniteBifield(8, modulus=0b100011101)  # zdefiniowanie GF(2^8) i wielomianu pierwotnego x^8+x^4+x^3+x^2+1
 alpha = field.primitive_element
 prim_elements = {256: 0b0}  # stworzenie słownika przechowującego warotści każdej alfy, wartość 256 to wartość
-
-
 # specjalna która jest czystym zerem
 
 
@@ -35,11 +33,6 @@ for i in range(0, 256):
     prim_elements[i] = int(tmp, base=2)
 
 
-
-# for i in range(0, len(prim_elements)):
-#     print(str(i) + " " + str(prim_elements[i]))
-
-
 # definiowanie tabliczki dodawania
 add_tab = [[find_alfa(prim_elements[i] ^ prim_elements[j]) for j in range(257)] for i in range(257)]
 
@@ -50,9 +43,6 @@ mul_tab = [[find_alfa(prim_elements[i] & prim_elements[j]) for j in range(257)] 
 
 # definiowanie tabliczki dzielenia
 div_tab = [[find_alfa((255 ^ prim_elements[mul_tab[i][j]])%256) for j in range(257)] for i in range(257)]
-
-# for i in range(0,len(div_tab)):
-#     print(div_tab[i])
 
 
 # WIELOMIAN GENERATOROWY

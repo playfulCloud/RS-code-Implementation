@@ -1,16 +1,15 @@
 import re
 import komm
-import numpy as np
-from scipy import signal
-import matplotlib.pyplot as plt
+import random
 
 # parametry początkowe dla kodu RS
 n = 10
 k = 4
 t = 3
 r = 6
-mess = [240, 230, 195, 177]
-poly_pirm = [1,0,0,0,1,1,1,0,1]
+mess = [55, 230, 2, 103]
+
+# Encoder RS
 
 # obliczona ręcznie postać wielomianu generującego, która
 # zostanie przepuszczna prze odpowiednią fukcję która da nam wspłczyniki
@@ -36,25 +35,14 @@ for i in range(0, 256):
     tmp = tmp.replace('0b', '')
     prim_elements[i] = int(tmp, base=2)
 
-
-
-# for i in range(0, len(prim_elements)):
-#     print(str(i) + " " + str(prim_elements[i]))
-
-
 # definiowanie tabliczki dodawania
 add_tab = [[find_alfa(prim_elements[i] ^ prim_elements[j]) for j in range(257)] for i in range(257)]
-
 
 # definiowanie tabliczki mnożenia
 mul_tab = [[find_alfa(prim_elements[i] & prim_elements[j]) for j in range(257)] for i in range(257)]
 
-
 # definiowanie tabliczki dzielenia
-div_tab = [[find_alfa((255 ^ prim_elements[mul_tab[i][j]])%256) for j in range(257)] for i in range(257)]
-
-# for i in range(0,len(div_tab)):
-#     print(div_tab[i])
+div_tab = [[find_alfa((255 ^ prim_elements[mul_tab[i][j]]) % 256) for j in range(257)] for i in range(257)]
 
 
 # WIELOMIAN GENERATOROWY
@@ -114,17 +102,17 @@ def div(poly1, poly2):
         # Oblicz współczynnik do podzielenia
         quotient_coeff = div_tab[int(divisor)][int(leading_term)]
 
-        # Pomnóż mianownik przez współczynnik
-        # factor = [0] * (len(remainder) - len(poly2)) + [quotient_coeff]
-        dividend = [term & quotient_coeff for term in poly2]
+        # Pomnóż mianownik przez współczynnik -> term & quotient_coeff
+        dividend = [mul_tab[term][quotient_coeff] for term in poly2]
 
-        # Odejmij wynik mnożenia od reszty
-        remainder = [remainder[i] ^ dividend[i] for i in range(0, len(dividend) - 1)]
+        # Odejmij wynik mnożenia od reszty -> remainder[i] ^ dividend[i]
+        remainder = [add_tab[remainder[i]][dividend[i]] for i in range(0, len(dividend) - 1)]
 
         # Dodaj wynik do ilorazu
         quotient[len(remainder) - 3] = quotient_coeff
 
     return remainder, quotient
+
 
 couter_power = 0
 help_mess = mess.copy()
@@ -132,49 +120,21 @@ while couter_power < 6:
     help_mess.append(0)
     couter_power += 1
 
-encode, rest = div(help_mess,gen_poly)
+encode, rest = div(help_mess, gen_poly)
 
 full_mess = mess + encode
 
 print(full_mess)
 
+# prowizorycznyu kanał szumu
 
-msg_bits = ""
-for value in full_mess:
-    bits = format(value, "08b")  # zamiana na postać binarną z wiodącymi zerami
-    msg_bits += bits
 
-print(msg_bits)
+for i in range(0, t):
+    error_to_change = random.randint(0, 255)
+    error_index = random.randint(0, len(full_mess) - 1)
+    full_mess[error_index] = error_to_change
 
-# Ustawienie parametrów modulacji
-f_c = 1000 # częstotliwość fali nośnej
-f_m = 100 # częstotliwość sygnału modulującego
-fs = 8000 # częstotliwość próbkowania
+print(full_mess)
+print(gen_poly)
 
-# Konwersja ciągu bitów na wektor liczb całkowitych
-msg = np.array([int(x) for x in msg_bits])
-
-# Wygenerowanie sygnału modulującego
-t = np.arange(0, len(msg)/f_m, 1/fs)
-modulating = np.repeat(msg, int(fs/f_m))
-
-# Wygenerowanie fali nośnej
-carrier = np.sin(2 * np.pi * f_c * t)
-
-# Przeprowadzenie modulacji ASK
-modulated = carrier * (modulating + 1) / 2
-
-# Wyświetlenie wyników modulacji
-fig, axs = plt.subplots(3, 1, figsize=(10,8))
-
-axs[0].plot(t, modulating)
-axs[0].set_title('Sygnał modulujący')
-
-axs[1].plot(t, carrier)
-axs[1].set_title('Fala nośna')
-
-axs[2].plot(t, modulated)
-axs[2].set_title('Sygnał modulowany')
-
-plt.tight_layout()
-plt.show()
+# Dekoder RS
