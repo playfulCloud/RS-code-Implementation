@@ -6,7 +6,7 @@ n = 10
 k = 4
 t = 3
 r = 6
-mess = [240,230,195,177]
+mess = [240, 230, 195, 177]
 
 # obliczona ręcznie postać wielomianu generującego, która
 # zostanie przepuszczna prze odpowiednią fukcję która da nam wspłczyniki
@@ -16,7 +16,16 @@ row = "x6+x5(a1+a2+a3+a4+a5+a6)+x4(a3+a4+a7+a10+a11)+x3(a6+a7+a9+a10+a11+a12+a14
 field = komm.FiniteBifield(8, modulus=0b100011101)  # zdefiniowanie GF(2^8) i wielomianu pierwotnego x^8+x^4+x^3+x^2+1
 alpha = field.primitive_element
 prim_elements = {256: 0b0}  # stworzenie słownika przechowującego warotści każdej alfy, wartość 256 to wartość
+
+
 # specjalna która jest czystym zerem
+
+
+# funkcja dostaje wartość przynależną dopewnej alfy i wyszukuje w słowniku jej stopnia
+def find_alfa(value):
+    for i in range(0, len(prim_elements)):
+        if prim_elements[i] == value:
+            return i
 
 
 # pętla odpowiedzialna za tworzenie i dopisaywanie każdego elemtu do słowniaka
@@ -25,23 +34,32 @@ for i in range(0, 256):
     tmp = tmp.replace('0b', '')
     prim_elements[i] = int(tmp, base=2)
 
-# for i in range(0,len(prim_elements)):
+
+
+# for i in range(0, len(prim_elements)):
 #     print(str(i) + " " + str(prim_elements[i]))
 
 
 # definiowanie tabliczki dodawania
-add_tab = [[prim_elements[i] ^ prim_elements[j] for j in range(257)] for i in range(257)]
+add_tab = [[find_alfa(prim_elements[i] ^ prim_elements[j]) for j in range(257)] for i in range(257)]
+
+
 # definiowanie tabliczki mnożenia
-mul_tab = [[prim_elements[i] & prim_elements[j] for j in range(257)] for i in range(257)]
-#definiowanie tabliczki dzielenia
-div_tab = [[255 ^ mul_tab[i][j] for j in range(257)] for i in range(257)]
+mul_tab = [[find_alfa(prim_elements[i] & prim_elements[j]) for j in range(257)] for i in range(257)]
+
+
+# definiowanie tabliczki dzielenia
+div_tab = [[find_alfa((255 ^ prim_elements[mul_tab[i][j]])%256) for j in range(257)] for i in range(257)]
+
+# for i in range(0,len(div_tab)):
+#     print(div_tab[i])
+
 
 # WIELOMIAN GENERATOROWY
 def gen_fun_256(strum):
     tab = re.split(r'[+()*]', strum)
 
-    gen_alfa_tab = []
-    gen_alfa_tab.append(1)
+    gen_alfa_tab = [1]
 
     tab.remove("x6")
     while tab.__contains__(''):
@@ -50,8 +68,8 @@ def gen_fun_256(strum):
     i = 0
     while i < len(tab) - 2:
         try:
-            if ('a' in tab[i] and 'a' in tab[i + 1]):
-                if (tab[i][0] == 'a' and tab[i + 1][0] == 'a'):
+            if 'a' in tab[i] and 'a' in tab[i + 1]:
+                if tab[i][0] == 'a' and tab[i + 1][0] == 'a':
                     num1 = tab[i].split("a")
                     num2 = tab[i + 1].split("a")
                     tab[i + 1] = "a" + str(add_tab[int(num1[1])][int(num2[1])])
@@ -62,13 +80,14 @@ def gen_fun_256(strum):
             print("error")
 
     for k in range(0, len(tab)):
-        if ('a' in tab[k]):
+        if 'a' in tab[k]:
             gen_alfa_tab.append(int(tab[k].split('a')[1]))
 
     return gen_alfa_tab
 
 
 gen_poly = gen_fun_256(row)
+
 
 def div(poly1, poly2):
     """
@@ -93,20 +112,15 @@ def div(poly1, poly2):
         # Oblicz współczynnik do podzielenia
         quotient_coeff = div_tab[int(divisor)][int(leading_term)]
 
-        print(quotient_coeff)
-
         # Pomnóż mianownik przez współczynnik
         # factor = [0] * (len(remainder) - len(poly2)) + [quotient_coeff]
         dividend = [term & quotient_coeff for term in poly2]
 
-        print(dividend)
-        print(remainder)
-
         # Odejmij wynik mnożenia od reszty
-        remainder = [remainder[i] ^ dividend[i] for i in range(0,len(dividend)-1)]
+        remainder = [remainder[i] ^ dividend[i] for i in range(0, len(dividend) - 1)]
 
         # Dodaj wynik do ilorazu
-        quotient[len(remainder)-3] = quotient_coeff
+        quotient[len(remainder) - 3] = quotient_coeff
 
     return remainder, quotient
 
