@@ -1,5 +1,8 @@
 import re
 import komm
+import numpy as np
+from scipy import signal
+import matplotlib.pyplot as plt
 
 # parametry początkowe dla kodu RS
 n = 10
@@ -7,6 +10,7 @@ k = 4
 t = 3
 r = 6
 mess = [240, 230, 195, 177]
+poly_pirm = [1,0,0,0,1,1,1,0,1]
 
 # obliczona ręcznie postać wielomianu generującego, która
 # zostanie przepuszczna prze odpowiednią fukcję która da nam wspłczyniki
@@ -16,8 +20,6 @@ row = "x6+x5(a1+a2+a3+a4+a5+a6)+x4(a3+a4+a7+a10+a11)+x3(a6+a7+a9+a10+a11+a12+a14
 field = komm.FiniteBifield(8, modulus=0b100011101)  # zdefiniowanie GF(2^8) i wielomianu pierwotnego x^8+x^4+x^3+x^2+1
 alpha = field.primitive_element
 prim_elements = {256: 0b0}  # stworzenie słownika przechowującego warotści każdej alfy, wartość 256 to wartość
-
-
 # specjalna która jest czystym zerem
 
 
@@ -135,3 +137,44 @@ encode, rest = div(help_mess,gen_poly)
 full_mess = mess + encode
 
 print(full_mess)
+
+
+msg_bits = ""
+for value in full_mess:
+    bits = format(value, "08b")  # zamiana na postać binarną z wiodącymi zerami
+    msg_bits += bits
+
+print(msg_bits)
+
+# Ustawienie parametrów modulacji
+f_c = 1000 # częstotliwość fali nośnej
+f_m = 100 # częstotliwość sygnału modulującego
+fs = 8000 # częstotliwość próbkowania
+
+# Konwersja ciągu bitów na wektor liczb całkowitych
+msg = np.array([int(x) for x in msg_bits])
+
+# Wygenerowanie sygnału modulującego
+t = np.arange(0, len(msg)/f_m, 1/fs)
+modulating = np.repeat(msg, int(fs/f_m))
+
+# Wygenerowanie fali nośnej
+carrier = np.sin(2 * np.pi * f_c * t)
+
+# Przeprowadzenie modulacji ASK
+modulated = carrier * (modulating + 1) / 2
+
+# Wyświetlenie wyników modulacji
+fig, axs = plt.subplots(3, 1, figsize=(10,8))
+
+axs[0].plot(t, modulating)
+axs[0].set_title('Sygnał modulujący')
+
+axs[1].plot(t, carrier)
+axs[1].set_title('Fala nośna')
+
+axs[2].plot(t, modulated)
+axs[2].set_title('Sygnał modulowany')
+
+plt.tight_layout()
+plt.show()
