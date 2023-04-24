@@ -18,7 +18,7 @@ row = "x6+x5(a1+a2+a3+a4+a5+a6)+x4(a3+a4+a7+a10+a11)+x3(a6+a7+a9+a10+a11+a12+a14
 
 field = komm.FiniteBifield(8, modulus=0b100011101)  # zdefiniowanie GF(2^8) i wielomianu pierwotnego x^8+x^4+x^3+x^2+1
 alpha = field.primitive_element
-prim_elements = {256: 0b0}  # stworzenie słownika przechowującego warotści każdej alfy, wartość 256 to wartość
+prim_elements = {255: 0b0}  # stworzenie słownika przechowującego warotści każdej alfy, wartość 256 to wartość
 # specjalna która jest czystym zerem
 
 
@@ -30,19 +30,24 @@ def find_alfa(value):
 
 
 # pętla odpowiedzialna za tworzenie i dopisaywanie każdego elemtu do słowniaka
-for i in range(0, 256):
+for i in range(0, 255):
     tmp = str(alpha ** i)
     tmp = tmp.replace('0b', '')
     prim_elements[i] = int(tmp, base=2)
 
+for i in range(len(prim_elements)):
+    print(str(i) + " " + str(prim_elements[i]))
+
+
 # definiowanie tabliczki dodawania
-add_tab = [[find_alfa(prim_elements[i] ^ prim_elements[j]) for j in range(257)] for i in range(257)]
+add_tab = [[find_alfa(prim_elements[i] ^ prim_elements[j]) for j in range(256)] for i in range(256)]
 
 # definiowanie tabliczki mnożenia
-mul_tab = [[find_alfa(prim_elements[i] & prim_elements[j]) for j in range(257)] for i in range(257)]
+mul_tab = [[find_alfa(prim_elements[i] & prim_elements[j]) for j in range(256)] for i in range(256)]
+
 
 # definiowanie tabliczki dzielenia
-div_tab = [[find_alfa((255 ^ prim_elements[mul_tab[i][j]]) % 256) for j in range(257)] for i in range(257)]
+div_tab = [[find_alfa((255 ^ prim_elements[mul_tab[i][j]]) % 256) for j in range(256)] for i in range(256)]
 
 
 # WIELOMIAN GENERATOROWY
@@ -135,6 +140,49 @@ for i in range(0, t):
     full_mess[error_index] = error_to_change
 
 print(full_mess)
-print(gen_poly)
+# print(gen_poly)
 
 # Dekoder RS
+
+def cal_syndroms(encrypt_mess):
+
+    sydroms = []
+
+    for i in range(1,7):
+        power = []
+        for a in range(0,len(encrypt_mess)-1):
+            power.append(mul_tab[encrypt_mess[a]][((i * ((len(encrypt_mess) - a)-1)) % 255)]) # jezeli a to indeks  to len(A)-1 to najwyzsza potega
+            # czyli zeby policzyc kolejne potegi od lewej do praewj to len(a) - a to potęga na odpowiednim miejscu
+            # przykład dla x^9  -> ((len(encrypt_mess) - a)-1)
+            # 0 - > 9
+            # 1 - > 8
+
+        power.append(encrypt_mess[-1])
+        temp_sum = power[0]
+
+        for i in range(1,len(power)):
+            temp_sum = add_tab[temp_sum][power[i]]
+
+        sydroms.append(temp_sum)
+
+    return sydroms
+
+sydnromes_group = cal_syndroms(full_mess)
+print(sydnromes_group)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
