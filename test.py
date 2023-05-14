@@ -7,7 +7,7 @@ n = 10
 k = 4
 t = 3
 r = 6
-mess = [55, 230, 2, 103]
+mess = [255,255,255,0] # zapis alf -> alfa 255 to wektor 0 a alfa 0 to wektor 1
 
 # Encoder RS
 
@@ -39,18 +39,18 @@ for i in range(len(prim_elements)):
     print(str(i) + " " + str(prim_elements[i]))
 
 
-# definiowanie tabliczki dodawania
+# definiowanie tabliczki dodawania - zapis alf
 add_tab = [[find_alfa(prim_elements[i] ^ prim_elements[j]) for j in range(256)] for i in range(256)]
 
-# definiowanie tabliczki mnożenia
-mul_tab = [[find_alfa(prim_elements[i] & prim_elements[j]) for j in range(256)] for i in range(256)]
+# definiowanie tabliczki mnożenia - zapis alf
+mul_tab = [[find_alfa( (i + j) % 256 ) for j in range(256)] for i in range(256)]
 
 
-# definiowanie tabliczki dzielenia
-div_tab = [[find_alfa((255 ^ prim_elements[mul_tab[i][j]]) % 256) for j in range(256)] for i in range(256)]
+# definiowanie tabliczki dzielenia - zapis alf
+div_tab = [[find_alfa( (i - j) % 256 ) for j in range(256)] for i in range(256)]
 
 
-# WIELOMIAN GENERATOROWY
+# WIELOMIAN GENERATOROWY - zapis alf
 def gen_fun_256(strum):
     tab = re.split(r'[+()*]', strum)
 
@@ -84,7 +84,7 @@ def gen_fun_256(strum):
 gen_poly = gen_fun_256(row)
 
 
-def div(poly1, poly2):
+def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
     """
     Funkcja wykonująca dzielenie wielomianów w ciele gf(256) na podstawie tabeli dzielenia.
     Argumenty:
@@ -105,13 +105,14 @@ def div(poly1, poly2):
         divisor = poly2[0]
 
         # Oblicz współczynnik do podzielenia
-        quotient_coeff = div_tab[int(divisor)][int(leading_term)]
+        #quotient_coeff = div_tab[int(divisor)][int(leading_term)]
+        quotient_coeff = div_tab[int(leading_term)][int(divisor)]
 
         # Pomnóż mianownik przez współczynnik -> term & quotient_coeff
-        dividend = [mul_tab[term][quotient_coeff] for term in poly2]
+        dividend = [mul_tab[quotient_coeff][term] for term in poly2]
 
         # Odejmij wynik mnożenia od reszty -> remainder[i] ^ dividend[i]
-        remainder = [add_tab[remainder[i]][dividend[i]] for i in range(0, len(dividend) - 1)]
+        remainder = [add_tab[dividend[i]][remainder[i]] for i in range(0, len(dividend) - 1)]
 
         # Dodaj wynik do ilorazu
         quotient[len(remainder) - 3] = quotient_coeff
@@ -128,18 +129,19 @@ while couter_power < 6:
 encode, rest = div(help_mess, gen_poly)
 
 full_mess = mess + encode
+print(encode)
 
-print(full_mess)
+#print(full_mess)
 
 # prowizorycznyu kanał szumu
 
 
-for i in range(0, t):
-    error_to_change = random.randint(0, 255)
-    error_index = random.randint(0, len(full_mess) - 1)
-    full_mess[error_index] = error_to_change
+# for i in range(0, t):
+#     error_to_change = random.randint(0, 255)
+#     error_index = random.randint(0, len(full_mess) - 1)
+#     full_mess[error_index] = error_to_change
 
-print(full_mess)
+# print(full_mess)
 # print(gen_poly)
 
 # Dekoder RS
@@ -168,21 +170,34 @@ def cal_syndroms(encrypt_mess):
     return sydroms
 
 sydnromes_group = cal_syndroms(full_mess)
-print(sydnromes_group)
+#print(sydnromes_group)
+
+#
+#
 
 
+for i in range(len(div_tab)):
+    print(div_tab[i])
+
+print("tablica mnozenia")
+
+for i in range(len(mul_tab)):
+    print(mul_tab[i])
 
 
+print("dzielenieprzez wielomian generujacy")
+print(div(full_mess , gen_poly))
 
-
-
-
-
-
-
-
-
-
-
-
-
+print("Wiadmosc")
+print(mess)
+print("Wiadomosc po przekodowaniu")
+print(full_mess)
+print("Generator")
+print(gen_poly)
+print("Zrobiony przez bilbioteke")
+#print(int_array)
+print("dzielenie wiadomosci ktora kodujemy")
+print(div(full_mess,gen_poly))
+sekwenncja = [255,255,255,0,255,255,255,255,255,255]
+print("Sekwencja przez generujacy")
+print(div(sekwenncja,gen_poly))
