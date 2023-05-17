@@ -43,7 +43,7 @@ for i in range(len(prim_elements)):
 add_tab = [[find_alfa(prim_elements[i] ^ prim_elements[j]) for j in range(256)] for i in range(256)]
 
 # definiowanie tabliczki mnożenia - zapis alf
-mul_tab = [[find_alfa( (i + j) % 255 ) for j in range(256)] for i in range(256)]
+mul_tab = [[( (i + j) % 255 ) for j in range(256)] for i in range(256)]
 
 
 # WIELOMIAN GENERATOROWY - zapis alf
@@ -97,17 +97,16 @@ def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
 
     remainder = poly1.copy()
 
-    index = 0
     temp = []
     wynik = []
-    while len(remainder) >= len(poly2):
+
+    while(len(remainder) >= len(poly2)):
         for i in range(len(poly2)):
             if remainder[i] != 0: #jezeli sprawdzany znak jest rowny pierwszemu znakowy
-                temp = mul_poly(remainder,poly2, i)
+                temp = mul_poly(remainder, poly2, i)
                 wynik = xor_poly(remainder, poly2, temp, i)
                 remainder = delete_if_zero_in_result(wynik, remainder, i)
-            else:
-                continue
+
 
 
 
@@ -115,20 +114,22 @@ def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
 def mul_poly(remainder, gen, i):
     temp = []
     for j in range(len(gen)):
-        temp.append(mul_tab[remainder[i] - 1 ][gen[j]])
+        temp.append(mul_tab[remainder[i]][gen[j]])
+        print("Remainder: " + str(remainder[i]) + " Gen: " + str(gen[j]))
+
     return temp
 def xor_poly(remainder, gen, temp, i):
     wynik = []
     for j in range(len(gen)):
         #wynik.append(add_tab[prim_elements.get(remainder[i]-1)][prim_elements.get(temp[j])])
-        wynik.append(add_tab[remainder[i]-1][temp[j]])
+        wynik.append(add_tab[remainder[i+j]][temp[j]])
     return wynik
 def delete_if_zero_in_result(wynik, poly1,i):
-
     while wynik[0] == 255:
         wynik.pop(0)
 
-    wynik.append(poly1[(len(poly1)-1)-i])
+    if len(poly1)-i != 7:
+        wynik.append(poly1[(len(poly1)-1)-i])
 
     return wynik
 
@@ -139,12 +140,12 @@ while couter_power < 6:
     help_mess.append(0)
     couter_power += 1
 
-# encode = div(help_mess, gen_poly)
-#
-# full_mess = mess + encode
-# print(encode)
+encode = div(help_mess, gen_poly)
 
-#print(full_mess)
+full_mess = mess + encode
+print(encode)
+
+print(full_mess)
 
 # prowizorycznyu kanał szumu
 
@@ -214,3 +215,8 @@ def cal_syndroms(encrypt_mess):
 # sekwenncja = [255,255,255,0,255,255,255,255,255,255]
 # print("Sekwencja przez generujacy")
 # print(div(sekwenncja,gen_poly))
+print(prim_elements[1])
+print(find_alfa(prim_elements[1]))
+print((167+1)%255)
+print(mul_tab[1][1])
+print(add_tab[1][1])
