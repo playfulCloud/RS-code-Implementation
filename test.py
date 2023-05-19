@@ -7,7 +7,7 @@ n = 10
 k = 4
 t = 3
 r = 6
-mess = [0,0,0,1] # zapis alf -> alfa 255 to wektor 0 a alfa 0 to wektor 1
+mess = [255,0,255,255] # zapis alf -> alfa 255 to wektor 0 a alfa 0 to wektor 1
 
 # Encoder RS
 
@@ -50,7 +50,7 @@ mul_tab = [[( (i + j) % 255 ) for j in range(256)] for i in range(256)]
 def gen_fun_256(strum):
     tab = re.split(r'[+()*]', strum)
 
-    gen_alfa_tab = [1]
+    gen_alfa_tab = [0]
 
     tab.remove("x6")
     while tab.__contains__(''):
@@ -78,10 +78,6 @@ def gen_fun_256(strum):
 
 
 gen_poly = gen_fun_256(row)
-# for i in range(len(mul_tab)):
-#     print(mul_tab[i])
-
-print(mul_tab[0][0])
 
 def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
     """
@@ -96,26 +92,22 @@ def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
         return [], poly1
 
     remainder = poly1.copy()
-
-    temp = []
-    wynik = []
-
-    while(len(remainder) >= len(poly2)):
-        for i in range(len(poly2)):
-            if remainder[i] != 0: #jezeli sprawdzany znak jest rowny pierwszemu znakowy
-                temp = mul_poly(remainder, poly2, i)
-                wynik = xor_poly(remainder, poly2, temp, i)
-                remainder = delete_if_zero_in_result(wynik, remainder, i)
-
-
-
+    i = 0
+    while len(remainder) >= len(poly2) and i < len(poly1):
+        if remainder[i] != 255: #jezeli sprawdzany znak jest rowny pierwszemu znakowy
+            temp = mul_poly(remainder, poly2)
+            wynik = xor_poly(remainder, poly2, temp, i)
+            remainder , i = delete_if_zero_in_result(wynik, remainder, i)
+        else:
+            i += 1
 
     return remainder
-def mul_poly(remainder, gen, i):
+
+
+def mul_poly(remainder, gen):
     temp = []
     for j in range(len(gen)):
-        temp.append(mul_tab[remainder[i]][gen[j]])
-        print("Remainder: " + str(remainder[i]) + " Gen: " + str(gen[j]))
+        temp.append(mul_tab[remainder[0]][gen[j]])
 
     return temp
 def xor_poly(remainder, gen, temp, i):
@@ -131,13 +123,13 @@ def delete_if_zero_in_result(wynik, poly1,i):
     if len(poly1)-i != 7:
         wynik.append(poly1[(len(poly1)-1)-i])
 
-    return wynik
+    return wynik , 0
 
 
 couter_power = 0
 help_mess = mess.copy()
 while couter_power < 6:
-    help_mess.append(0)
+    help_mess.append(255)
     couter_power += 1
 
 encode = div(help_mess, gen_poly)
@@ -147,8 +139,15 @@ print(encode)
 
 print(full_mess)
 
-# prowizorycznyu kanał szumu
 
+
+
+
+
+
+
+
+# prowizorycznyu kanał szumu
 
 # for i in range(0, t):
 #     error_to_change = random.randint(0, 255)
@@ -157,6 +156,14 @@ print(full_mess)
 
 # print(full_mess)
 # print(gen_poly)
+
+
+
+
+
+
+
+
 
 # Dekoder RS
 
@@ -185,38 +192,4 @@ def cal_syndroms(encrypt_mess):
 
 # sydnromes_group = cal_syndroms(full_mess)
 # #print(sydnromes_group)
-#
-# #
-# #
-#
-#
-# for i in range(len(div_tab)):
-#     print(div_tab[i])
-#
-# print("tablica mnozenia")
-#
-# for i in range(len(mul_tab)):
-#     print(mul_tab[i])
-#
-#
-# print("dzielenieprzez wielomian generujacy")
-# print(div(full_mess , gen_poly))
-#
-# print("Wiadmosc")
-# print(mess)
-# print("Wiadomosc po przekodowaniu")
-# print(full_mess)
-# print("Generator")
-# print(gen_poly)
-# print("Zrobiony przez bilbioteke")
-# #print(int_array)
-# print("dzielenie wiadomosci ktora kodujemy")
-# print(div(full_mess,gen_poly))
-# sekwenncja = [255,255,255,0,255,255,255,255,255,255]
-# print("Sekwencja przez generujacy")
-# print(div(sekwenncja,gen_poly))
-print(prim_elements[1])
-print(find_alfa(prim_elements[1]))
-print((167+1)%255)
-print(mul_tab[1][1])
-print(add_tab[1][1])
+
