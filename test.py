@@ -7,7 +7,7 @@ n = 10
 k = 4
 t = 3
 r = 6
-mess = [255,0,255,255] # zapis alf -> alfa 255 to wektor 0 a alfa 0 to wektor 1
+mess = [1,2,3,4] # zapis alf -> alfa 255 to wektor 0 a alfa 0 to wektor 1
 
 # Encoder RS
 
@@ -95,19 +95,20 @@ def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
     i = 0
     while len(remainder) >= len(poly2) and i < len(poly1):
         if remainder[i] != 255: #jezeli sprawdzany znak jest rowny pierwszemu znakowy
-            temp = mul_poly(remainder, poly2)
+
+            temp = mul_poly(remainder, poly2, i)
             wynik = xor_poly(remainder, poly2, temp, i)
-            remainder , i = delete_if_zero_in_result(wynik, remainder, i)
+            remainder , i = delete_if_zero_in_result(wynik, remainder, i, poly2)
         else:
             i += 1
 
     return remainder
 
 
-def mul_poly(remainder, gen):
+def mul_poly(remainder, gen, i):
     temp = []
     for j in range(len(gen)):
-        temp.append(mul_tab[remainder[0]][gen[j]])
+        temp.append(mul_tab[remainder[i]][gen[j]])
 
     return temp
 def xor_poly(remainder, gen, temp, i):
@@ -116,12 +117,14 @@ def xor_poly(remainder, gen, temp, i):
         #wynik.append(add_tab[prim_elements.get(remainder[i]-1)][prim_elements.get(temp[j])])
         wynik.append(add_tab[remainder[i+j]][temp[j]])
     return wynik
-def delete_if_zero_in_result(wynik, poly1,i):
-    while wynik[0] == 255:
+def delete_if_zero_in_result(wynik, poly1,i,poly2):
+
+    while wynik and wynik[0] == 255 :
         wynik.pop(0)
 
     if len(poly1)-i != 7:
-        wynik.append(poly1[(len(poly1)-1)-i])
+        wynik.append(poly1[(len(poly1)-(len(poly1)-len(poly2)-i))]) #
+
 
     return wynik , 0
 
@@ -139,14 +142,6 @@ print(encode)
 
 print(full_mess)
 
-
-
-
-
-
-
-
-
 # prowizorycznyu kanał szumu
 
 # for i in range(0, t):
@@ -156,13 +151,6 @@ print(full_mess)
 
 # print(full_mess)
 # print(gen_poly)
-
-
-
-
-
-
-
 
 
 # Dekoder RS
@@ -190,6 +178,8 @@ def cal_syndroms(encrypt_mess):
 
     return sydroms
 
-# sydnromes_group = cal_syndroms(full_mess)
-# #print(sydnromes_group)
+sydnromes_group = cal_syndroms(full_mess)
+#print(sydnromes_group)
+
+print(div(full_mess,gen_poly))
 
