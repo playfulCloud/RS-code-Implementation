@@ -7,7 +7,12 @@ n = 10
 k = 4
 t = 3
 r = 6
-mess = [255,0,255,255] # zapis alf -> alfa 255 to wektor 0 a alfa 0 to wektor 1
+mess = [1,2,3,4] # zapis alf -> alfa 255 to wektor 0 a alfa 0 to wektor 1
+
+big_vector = []
+
+for i in range(0,244):
+    big_vector.append(255)
 
 # Encoder RS
 
@@ -79,15 +84,13 @@ def gen_fun_256(strum):
 
 gen_poly = gen_fun_256(row)
 
-def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
-    """
-    Funkcja wykonująca dzielenie wielomianów w ciele gf(256) na podstawie tabeli dzielenia.
-    Argumenty:
-    poly1 (list): pierwszy wielomian (dzielnik)
-    poly2 (list): drugi wielomian (dzielnik)
-    Zwraca:
-    tuple: reszta i iloraz wielomianów
-    """
+def div(poly1, poly2, isSyndrome):
+
+    tmp_zero = []
+
+    for k in range(0,10):
+        tmp_zero.append(255)
+
     if len(poly2) > len(poly1):
         return [], poly1
 
@@ -95,57 +98,65 @@ def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
     i = 0
     while len(remainder) >= len(poly2) and i < len(poly1):
         if remainder[i] != 255: #jezeli sprawdzany znak jest rowny pierwszemu znakowy
-            temp = mul_poly(remainder, poly2)
+            temp = mul_poly(remainder, poly2, i)
             wynik = xor_poly(remainder, poly2, temp, i)
-            remainder , i = delete_if_zero_in_result(wynik, remainder, i)
+            remainder, i = delete_if_zero_in_result(wynik, remainder, i, poly2)
         else:
             i += 1
 
-    return remainder
+    if isSyndrome:
+        tmp_len = len(tmp_zero) - 1
+        if len(remainder) > 0:
+            rem_len = len(remainder) - 1
+            while rem_len >= 0:
+                tmp_zero[tmp_len] = remainder[rem_len]
+                rem_len -= 1
+                tmp_len -= 1
+        return tmp_zero
+    else:
+        return remainder
 
 
-def mul_poly(remainder, gen):
+
+
+def mul_poly(remainder, gen, i):
     temp = []
     for j in range(len(gen)):
-        temp.append(mul_tab[remainder[0]][gen[j]])
+        temp.append(mul_tab[remainder[i]][gen[j]])
 
     return temp
 def xor_poly(remainder, gen, temp, i):
     wynik = []
     for j in range(len(gen)):
-        #wynik.append(add_tab[prim_elements.get(remainder[i]-1)][prim_elements.get(temp[j])])
         wynik.append(add_tab[remainder[i+j]][temp[j]])
     return wynik
-def delete_if_zero_in_result(wynik, poly1,i):
-    while wynik[0] == 255:
+def delete_if_zero_in_result(wynik, poly1,i,poly2):
+    while wynik and wynik[0] == 255 :
         wynik.pop(0)
 
-    if len(poly1)-i != 7:
-        wynik.append(poly1[(len(poly1)-1)-i])
+    num_of_last_num = len(poly1) - (len(poly2)+ i)
+    while num_of_last_num > 0:
+
+            num = len(poly1) - num_of_last_num
+            wynik.append(poly1[num])
+            num_of_last_num -= 1
+
 
     return wynik , 0
 
 
-couter_power = 0
-help_mess = mess.copy()
-while couter_power < 6:
-    help_mess.append(255)
-    couter_power += 1
-
-encode = div(help_mess, gen_poly)
-
-full_mess = mess + encode
-print(encode)
-
-print(full_mess)
-
-
-
-
-
-
-
-
+# couter_power = 0
+# help_mess = mess.copy()
+# while couter_power < 6:
+#     help_mess.append(255)
+#     couter_power += 1
+#
+# encode = div(help_mess, gen_poly)
+#
+# full_mess = mess + encode
+# print(encode)
+#
+# print(full_mess)
 
 # prowizorycznyu kanał szumu
 
@@ -156,13 +167,6 @@ print(full_mess)
 
 # print(full_mess)
 # print(gen_poly)
-
-
-
-
-
-
-
 
 
 # Dekoder RS
@@ -189,7 +193,143 @@ def cal_syndroms(encrypt_mess):
         sydroms.append(temp_sum)
 
     return sydroms
+#sydnromes_group = cal_syndroms(full_mess)
+#print(sydnromes_group)
 
-# sydnromes_group = cal_syndroms(full_mess)
-# #print(sydnromes_group)
+#print(div(full_mess,gen_poly))
+print(gen_poly)
+msg_a = [3,255,255,255]
+msg_b = [255,2,255,255]
+msg_c = [255,255,1,255]
+msg_target = [3,2,1,255]
 
+
+couter_power = 0
+help_mess = msg_a.copy()
+while couter_power < 6:
+    help_mess.append(255)
+    couter_power += 1
+
+encode = div(help_mess, gen_poly, False)
+
+full_mess_a = msg_a + encode
+
+# print("Wiadomosc a: " + str(msg_a))
+# print("Wiadomosc a po zakodowaniu : " + str(full_mess_a))
+
+
+
+couter_power = 0
+help_mess2 = msg_b.copy()
+while couter_power < 6:
+    help_mess2.append(255)
+    couter_power += 1
+
+encode = div(help_mess2, gen_poly, False)
+
+full_mess_b = msg_b + encode
+
+# print("Wiadomosc b: " + str(msg_b))
+# print("Wiadomosc b po zakodowaniu : " + str(full_mess_b))
+
+
+
+couter_power = 0
+help_mess3 = msg_c.copy()
+while couter_power < 6:
+    help_mess3.append(255)
+    couter_power += 1
+
+encode = div(help_mess3, gen_poly, False)
+
+full_mess_c = msg_c + encode
+
+print("Wiadomosc c: " + str(msg_c))
+print("Wiadomosc c po zakodowaniu : " + str(full_mess_c))
+
+
+
+couter_power = 0
+help_mess4 = msg_target.copy()
+while couter_power < 6:
+    help_mess4.append(255)
+    couter_power += 1
+
+encode = div(help_mess4, gen_poly, False)
+
+full_mess_target = msg_target + encode
+
+print("Wiadomosc targetu: " + str(msg_target))
+print("Wiadomosc target po zakodowaniu : " + str(full_mess_target))
+
+full_mess_do_por = []
+
+for i in range(len(full_mess_a)):
+    full_mess_do_por.append(add_tab[full_mess_c[i]][add_tab[full_mess_a[i]][full_mess_b[i]]])
+
+
+
+print("Wiadomosc xorowana po zakodowaniu : " + str(full_mess_do_por))
+
+# full_mess_c[2] = 2
+# full_mess_c[9] = 90
+# full_mess_c[3] = 152
+full_mess_c[3] = 8
+print(full_mess_c)
+big_vector += full_mess_c
+print(len(big_vector))
+
+def shift(direction, polly):
+    result = []
+    if(direction == True): #shift right
+        polly.insert(0, polly[len(polly) - 1])
+        polly.pop()
+        return polly
+    else:   #left
+        polly.append(polly[0])
+        polly.pop(0)
+        return polly
+
+def calculate_wage(polly):
+    w = 0
+    for i in range(0, len(polly)):
+        if polly[i] != 255:
+            w+=1
+    return w
+
+def xor_polly(polly1, polly2):
+    polly3 = []
+    for i in range(0, len(polly2)):
+        polly3.append(add_tab[polly1[i]][polly2[i]])
+    return polly3
+
+def shift_n_times(n, polly, direction):
+        for i in range(0,n):
+            shift(direction,polly)
+        return polly
+
+
+def simplified_decoder(big_vector,gen,k,t):
+    tmp_syndrom = []
+    result = []
+    i = 0
+    while(True):
+        tmp_syndrom = div(big_vector[-10:],gen,True)
+        w = calculate_wage(tmp_syndrom)
+        if w <= t:
+            big_vector = xor_polly(big_vector[-10:],tmp_syndrom)
+            result = shift_n_times(i,big_vector,False)
+            return result
+            break
+        else:
+            if i != k:
+                big_vector = shift(True,big_vector)
+                i+= 1
+            else:
+                print("Cant decode message")
+                break
+
+
+print(simplified_decoder(big_vector,gen_poly,k,t))
+# full_mess_c[9] = 90
+print(str(div(full_mess_c,gen_poly, True)))
