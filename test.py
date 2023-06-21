@@ -48,7 +48,7 @@ for i in range(len(prim_elements)):
 add_tab = [[find_alfa(prim_elements[i] ^ prim_elements[j]) for j in range(256)] for i in range(256)]
 
 # definiowanie tabliczki mnożenia - zapis alf
-mul_tab = [[( (i + j) % 255 ) for j in range(256)] for i in range(256)]
+mul_tab = [[((i + j) % 255) for j in range(256)] for i in range(256)]
 
 
 # WIELOMIAN GENERATOROWY - zapis alf
@@ -84,14 +84,19 @@ def gen_fun_256(strum):
 
 gen_poly = gen_fun_256(row)
 
-def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
+def div(poly1, poly2, isSyndrome):
+
+    tmp_zero = []
+
+    for k in range(0,10):
+        tmp_zero.append(255)
 
     if len(poly2) > len(poly1):
         return [], poly1
 
     remainder = poly1.copy()
     i = 0
-    while len(remainder) >= len(poly2) and i < len(poly1):
+    while len(remainder) >= len(poly2) and len(poly1) - (len(poly2)+ i) >= 0:
         if remainder[i] != 255: #jezeli sprawdzany znak jest rowny pierwszemu znakowy
             temp = mul_poly(remainder, poly2, i)
             wynik = xor_poly(remainder, poly2, temp, i)
@@ -99,7 +104,17 @@ def div(poly1, poly2): #- zapis alf/wektorowy, ciężko określić
         else:
             i += 1
 
-    return remainder
+    if isSyndrome:
+        tmp_len = len(tmp_zero) - 1
+        if len(remainder) > 0:
+            rem_len = len(remainder) - 1
+            while rem_len >= 0:
+                tmp_zero[tmp_len] = remainder[rem_len]
+                rem_len -= 1
+                tmp_len -= 1
+        return tmp_zero
+    else:
+        return remainder
 
 
 def mul_poly(remainder, gen, i):
@@ -108,19 +123,23 @@ def mul_poly(remainder, gen, i):
         temp.append(mul_tab[remainder[i]][gen[j]])
 
     return temp
+
 def xor_poly(remainder, gen, temp, i):
     wynik = []
     for j in range(len(gen)):
         wynik.append(add_tab[remainder[i+j]][temp[j]])
     return wynik
-def delete_if_zero_in_result(wynik, poly1,i,poly2):
 
+def delete_if_zero_in_result(wynik, poly1,i,poly2):
     while wynik and wynik[0] == 255 :
         wynik.pop(0)
 
-    if len(poly1)-i != 7:
-        wynik.append(poly1[(len(poly1)-(len(poly1)-len(poly2)-i))]) #
+    num_of_last_num = len(poly1) - (len(poly2)+ i)
+    while num_of_last_num > 0:
 
+            num = len(poly1) - num_of_last_num
+            wynik.append(poly1[num])
+            num_of_last_num -= 1
 
     return wynik , 0
 
@@ -131,12 +150,14 @@ def delete_if_zero_in_result(wynik, poly1,i,poly2):
 #     help_mess.append(255)
 #     couter_power += 1
 #
-# encode = div(help_mess, gen_poly)
+# encode = div(help_mess, gen_poly,False)
 #
 # full_mess = mess + encode
 # print(encode)
 #
 # print(full_mess)
+#
+# print(div(full_mess,gen_poly,True))
 
 # prowizorycznyu kanał szumu
 
@@ -149,39 +170,12 @@ def delete_if_zero_in_result(wynik, poly1,i,poly2):
 # print(gen_poly)
 
 
-# Dekoder RS
 
-def cal_syndroms(encrypt_mess):
-
-    sydroms = []
-
-    for i in range(1,7):
-        power = []
-        for a in range(0,len(encrypt_mess)-1):
-            power.append(mul_tab[encrypt_mess[a]][((i * ((len(encrypt_mess) - a)-1)) % 255)]) # jezeli a to indeks  to len(A)-1 to najwyzsza potega
-            # czyli zeby policzyc kolejne potegi od lewej do praewj to len(a) - a to potęga na odpowiednim miejscu
-            # przykład dla x^9  -> ((len(encrypt_mess) - a)-1)
-            # 0 - > 9
-            # 1 - > 8
-
-        power.append(encrypt_mess[-1])
-        temp_sum = power[0]
-
-        for i in range(1,len(power)):
-            temp_sum = add_tab[temp_sum][power[i]]
-
-        sydroms.append(temp_sum)
-
-    return sydroms
-#sydnromes_group = cal_syndroms(full_mess)
-#print(sydnromes_group)
-
-#print(div(full_mess,gen_poly))
 print(gen_poly)
-msg_a = [255,3,255,255]
-msg_b = [255,255,2,255]
-msg_c = [255,255,255,1]
-msg_target = [255,3,2,1]
+msg_a = [3,255,255,255]
+msg_b = [255,2,255,255]
+msg_c = [255,255,1,255]
+msg_target = [3,2,1,255]
 
 
 couter_power = 0
@@ -190,12 +184,12 @@ while couter_power < 6:
     help_mess.append(255)
     couter_power += 1
 
-encode = div(help_mess, gen_poly)
+encode = div(help_mess, gen_poly, False)
 
 full_mess_a = msg_a + encode
 
-print("Wiadomosc a: " + str(msg_a))
-print("Wiadomosc a po zakodowaniu : " + str(full_mess_a))
+# print("Wiadomosc a: " + str(msg_a))
+# print("Wiadomosc a po zakodowaniu : " + str(full_mess_a))
 
 
 
@@ -205,12 +199,12 @@ while couter_power < 6:
     help_mess2.append(255)
     couter_power += 1
 
-encode = div(help_mess2, gen_poly)
+encode = div(help_mess2, gen_poly, False)
 
 full_mess_b = msg_b + encode
 
-print("Wiadomosc b: " + str(msg_b))
-print("Wiadomosc b po zakodowaniu : " + str(full_mess_b))
+# print("Wiadomosc b: " + str(msg_b))
+# print("Wiadomosc b po zakodowaniu : " + str(full_mess_b))
 
 
 
@@ -220,12 +214,12 @@ while couter_power < 6:
     help_mess3.append(255)
     couter_power += 1
 
-encode = div(help_mess3, gen_poly)
+encode = div(help_mess3, gen_poly, False)
 
 full_mess_c = msg_c + encode
 
-print("Wiadomosc b: " + str(msg_c))
-print("Wiadomosc b po zakodowaniu : " + str(full_mess_c))
+print("Wiadomosc c: " + str(msg_c))
+print("Wiadomosc c po zakodowaniu : " + str(full_mess_c))
 
 
 
@@ -235,7 +229,7 @@ while couter_power < 6:
     help_mess4.append(255)
     couter_power += 1
 
-encode = div(help_mess4, gen_poly)
+encode = div(help_mess4, gen_poly, False)
 
 full_mess_target = msg_target + encode
 
@@ -246,14 +240,16 @@ full_mess_do_por = []
 
 for i in range(len(full_mess_a)):
     full_mess_do_por.append(add_tab[full_mess_c[i]][add_tab[full_mess_a[i]][full_mess_b[i]]])
-    # full_mess_do_por.append(add_tab[full_mess_b[i]][full_mess_c[i]])
-    #print(add_tab[full_mess_b[i]][full_mess_c[i]])
 
 
 
-print("Wiadomosc xorowana po zakodowaniu : " + str(full_mess_do_por))
+# print("Wiadomosc xorowana po zakodowaniu : " + str(full_mess_do_por))
 
-
+# full_mess_c[2] = 2
+# full_mess_c[9] = 90
+# full_mess_c[3] = 152
+# full_mess_c[2] = 2
+print(full_mess_c)
 big_vector += full_mess_c
 
 def shift(direction, polly):
@@ -287,14 +283,12 @@ def shift_n_times(n, polly, direction):
 
 
 def simplified_decoder(big_vector,gen,k,t):
-    syndrom = []
-    result = []
     i = 0
     while(True):
-        syndrom = div(big_vector,gen)
-        w = calculate_wage(syndrom)
+        tmp_syndrom = div(big_vector[-10:],gen,True)
+        w = calculate_wage(tmp_syndrom)
         if w <= t:
-            big_vector = xor_polly(big_vector[-10:],syndrom)
+            big_vector = xor_polly(big_vector[-10:],tmp_syndrom)
             result = shift_n_times(i,big_vector,False)
             return result
             break
@@ -306,7 +300,49 @@ def simplified_decoder(big_vector,gen,k,t):
                 print("Cant decode message")
                 break
 
+# Dekoder RS
 
-# print(simplified_decoder(big_vector,gen_poly,k,t))
-# print(div(full_mess_target,gen_poly))
-print(add_tab[232][168])
+def cal_syndroms(encrypt_mess):
+
+    sydroms = []
+    for symbol in range(1,7):
+        sydroms.append(cal_poly_syn(symbol,encrypt_mess))
+
+    return sydroms
+
+def cal_poly_syn(alf_symbol, poly):
+    tmp_tab = []
+    for x in range(0, len(poly)):
+        power = ((len(poly) - (x + 1)) * alf_symbol) % 255
+        sym_tmp = poly[x]
+        tmp_tab.append(mul_tab[sym_tmp][power])
+
+    wynik_tab = tmp_tab[0]
+    for k in range(1, len(tmp_tab)):
+        helper = add_tab[wynik_tab][tmp_tab[k]]
+        wynik_tab = add_tab[wynik_tab][tmp_tab[k]]
+
+    return wynik_tab
+#sydnromes_group = cal_syndroms(full_mess)
+#print(sydnromes_group)
+
+#print(div(full_mess,gen_poly))
+
+#print(add_tab)
+#print(simplified_decoder(big_vector,gen_poly,k,t))
+# full_mess_c[9] = 90/
+# test = [255, 255, 255, 255, 1, 8, 231, 173, 94, 60, 217]
+# shift(True,big_vector)
+# print(big_vector)
+# print(str(div(big_vector[-10:],gen_poly, False)))
+# shift(True,big_vector)
+# print(big_vector)
+# print(str(div(big_vector[-10:],gen_poly, True)))
+# shift(True,big_vector)
+# print(big_vector)
+# print(str(div(big_vector[-10:],gen_poly, True)))
+# shift(True,big_vector)
+# print(big_vector)
+# print(str(div(big_vector[-10:],gen_poly, True)))
+print(cal_syndroms(full_mess_c))
+print(add_tab[33][8])
